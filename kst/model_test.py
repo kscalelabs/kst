@@ -21,10 +21,10 @@ if __name__ == "__main__":
         sample_rate=16000,
     )
 
-    input_path = "samples/gt.wav"
+    input_path = "/app/pawel/SpeechTokenizer/samples/gt.wav"
     wav, sr = torchaudio.load(input_path, format="wav")
 
-    ckpt_path = "kst_1024/kst_1024.pt"
+    ckpt_path = "models/kst_1024/kst_1024.pt"
     tokenizer = KSTTokenizer.load_from_checkpoint(config, ckpt_path)
 
     # monophonic checking

@@ -1,4 +1,4 @@
-""" K-Scale Labs Speech Tokenizer"""
+""" K-Scale Labs Speech Tokenizer """
 from dataclasses import dataclass
 from typing import Optional
 
@@ -42,29 +42,29 @@ class KSTConfig:
 class KSTTokenizer(nn.Module):
     def __init__(self, config: KSTConfig):
         """
-        
         Args:
             config (KSTConfig): Model configuration.
         """
         super().__init__()
         self.encoder = SEANetEncoder(
-            n_filters=config.n_filters, 
-            dimension=config.dimension, 
+            n_filters=config.n_filters,
+            dimension=config.dimension,
             ratios=config.strides,
             lstm=config.lstm_layers,
             bidirectional=config.bidirectional,
             dilation_base=config.dilation_base,
             residual_kernel_size=config.residual_kernel_size,
             n_residual_layers=config.n_residual_layers,
-            activation=config.activation
+            activation=config.activation,
         )
         self.sample_rate = config.sample_rate
         self.n_q = config.n_q
         self.downsample_rate = np.prod(config.strides)
-        if config.dimension != config.semantic_dimension:
-            self.transform = nn.Linear(config.dimension, config.semantic_dimension)
-        else:
-            self.transform = nn.Identity()
+        self.transform = (
+            nn.Linear(config.dimension, config.semantic_dimension)
+            if config.dimension != config.semantic_dimension
+            else nn.Identity()
+        )
 
         self.encoding = config.encoding
 
@@ -74,24 +74,20 @@ class KSTTokenizer(nn.Module):
             num_codebooks=1,
         )
         self.decoder = SEANetDecoder(
-            n_filters=config.n_filters, 
-            dimension=config.dimension, 
+            n_filters=config.n_filters,
+            dimension=config.dimension,
             ratios=config.strides,
             lstm=config.lstm_layers,
             bidirectional=False,
             dilation_base=config.dilation_base,
             residual_kernel_size=config.residual_kernel_size,
             n_residual_layers=config.n_residual_layers,
-            activation=config.activation
+            activation=config.activation,
         )
-        
+
     @classmethod
-    def load_from_checkpoint(
-        cls, 
-        config: KSTConfig, 
-        ckpt_path: str
-    ):
-        """ Load model from checkpoint.
+    def load_from_checkpoint(cls, config: KSTConfig, ckpt_path: str):
+        """Load model from checkpoint.
 
         Args:
             config (KSTConfig): Model configuration.
@@ -101,95 +97,76 @@ class KSTTokenizer(nn.Module):
             KSTTokenizer: KSTTokenizer model.
         """
         model = cls(config)
-        params = torch.load(ckpt_path, map_location='cpu')
-        model.load_state_dict(params)
-        
+        match torch.load(ckpt_path, map_location="cpu"):
+            case params:
+                model.load_state_dict(params)
+
         return model
-    
-    def encode(
-        self, 
-        x: torch.tensor, 
-        n_q: int=None, 
-        st: int=None
-    ) -> torch.tensor:
-        """ Encode wavs into codes.
+
+    def encode(self, x: torch.Tensor, n_q: int = None, st: int = None) -> torch.Tensor:
+        """Encode wavs into codes.
 
         Args:
-            x (torch.tensor): Input wavs. Shape: (batch, channels, timesteps).
-            n_q (int, optional): Number of quantizers in RVQ used to encode. The default is all layers.
-            st (int, optional): Start quantizer index in RVQ. The default is 0.
+            x (torch.Tensor): Input wavs. Shape: (batch, channels, timesteps).
+            n_q (int, optional): Number of quantizers in RVQ used to encode. Defaults to all layers.
+            st (int, optional): Start quantizer index in RVQ. Defaults to 0.
 
         Returns:
-            codes (torch.tensor): Output indices for each quantizer. Shape: (n_q, batch, timesteps)
+            codes (torch.Tensor): Output indices for each quantizer. Shape: (n_q, batch, timesteps)
         """
         e = self.encoder(x)
-        if st is None:
-            st = 0
-        n_q = n_q if n_q else self.n_q
-        e = rearrange(e, 'b d t -> b t d')
+        st = st or 0
+        n_q = n_q or self.n_q
+        e = rearrange(e, "b d t -> b t d")
         codes = self.quantizer.encode(e)
         return codes
 
-    def encode_codes(self, 
-        x: torch.tensor, 
-        n_q: int=None,
-        st: int=None
-    ) -> torch.tensor:
-        """ Encode wavs into codes.
+    def encode_codes(
+        self, x: torch.Tensor, n_q: int = None, st: int = None
+    ) -> torch.Tensor:
+        """Encode wavs into codes.
 
         Args:
-            x (torch.tensor): Input wavs. Shape: (batch, channels, timesteps).
-            n_q (int, optional): Number of quantizers in RVQ used to encode. The default is all layers.
-            st (int, optional): Start quantizer index in RVQ. The default is 0.
+            x (torch.Tensor): Input wavs. Shape: (batch, channels, timesteps).
+            n_q (int, optional): Number of quantizers in RVQ used to encode. Defaults to all layers.
+            st (int, optional): Start quantizer index in RVQ. Defaults to 0.
 
         Returns:
-            codes (torch.tensor): Output indices for each quantizer. Shape: (n_q, batch, timesteps)
+            codes (torch.Tensor): Output indices for each quantizer. Shape: (n_q, batch, timesteps)
         """
         e = self.encoder(x)
-        if st is None:
-            st = 0
-        n_q = n_q if n_q else self.n_q
-        e = rearrange(e, 'b d t -> b t d')
+        st = st or 0
+        n_q = n_q or self.n_q
+        e = rearrange(e, "b d t -> b t d")
         codes = self.quantizer.encode_codes(e)
-
         return codes
 
-    def decode(
-        self, 
-        codes: torch.tensor, 
-        st: int=0
-    ) -> torch.tensor:
-        """ Decode codes into wavs.
+    def decode(self, codes: torch.Tensor, st: int = 0) -> torch.Tensor:
+        """Decode codes into wavs.
 
         Args:
-            codes (torch.tensor): Indices for each quantizer. Shape: (n_q, batch, timesteps).
-            st (int, optional): Start quantizer index in RVQ. The default is 0.
+            codes (torch.Tensor): Indices for each quantizer. Shape: (n_q, batch, timesteps).
+            st (int, optional): Start quantizer index in RVQ. Defaults to 0.
 
         Returns:
-            o (torch.tensor): Reconstruct wavs from codes. Shape: (batch, channels, timesteps)
+            o (torch.Tensor): Reconstruct wavs from codes. Shape: (batch, channels, timesteps)
         """
         quantized = self.quantizer.decode(codes)
-        quantized = rearrange(quantized, 'b t d -> b d t')
-
+        quantized = rearrange(quantized, "b t d -> b d t")
         o = self.decoder(quantized)
         return o
 
-    def decode_codes(
-        self, 
-        codes: torch.tensor, 
-        st: int=0
-    ) -> torch.tensor:
-        """ Decode codes into wavs.
+    def decode_codes(self, codes: torch.Tensor, st: int = 0) -> torch.Tensor:
+        """Decode codes into wavs.
 
         Args:
-            codes (torch.tensor): Indices for each quantizer. Shape: (n_q, batch, timesteps).
-            st (int, optional): Start quantizer index in RVQ. The default is 0.
+            codes (torch.Tensor): Indices for each quantizer. Shape: (n_q, batch, timesteps).
+            st (int, optional): Start quantizer index in RVQ. Defaults to 0.
 
         Returns:
-            o (torch.tensor): Reconstruct wavs from codes. Shape: (batch, channels, timesteps)
+            o (torch.Tensor): Reconstruct wavs from codes. Shape: (batch, channels, timesteps)
         """
         quantized = self.quantizer.decode_codes(codes)
-        quantized = rearrange(quantized, 'b t d -> b d t')
+        quantized = rearrange(quantized, "b t d -> b d t")
         o = self.decoder(quantized)
-
         return o

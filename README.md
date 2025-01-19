@@ -13,11 +13,13 @@
 Welcome to the K-Scale Speech Tokenizer Library! For more information, see the [documentation](https://docs.kscale.dev/machinelearning/kst).
 
 
+## Download model weights: 
 ```bash
 kscale model download kst_1024
 ```
 
 
+## Encode and decode audio:
 ```python
 from kst import KST
 
@@ -27,7 +29,7 @@ wav = kst.decode(codes)
 ```
 
 
-# Appreciation
+## Appreciation
 1. [Encodec](https://github.com/facebookresearch/encodec)
 2. [SpeechTokenizer](https://github.com/ZhangXInFD/SpeechTokenizer)
 2. [MagVIT2](https://magvit.cs.cmu.edu/v2/)
