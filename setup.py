@@ -27,6 +27,6 @@ setup(
     license_files=("LICENSE",),
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires=">=3.12",
+    python_requires=">=3.10",
     install_requires=requirements,
 )

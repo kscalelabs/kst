@@ -10,22 +10,35 @@
 
 # K-Scale Speech Tokenizer
 
-Welcome to the K-Scale Speech Tokenizer Library! For more information, see the [documentation](https://docs.kscale.dev/machinelearning/kst).
+Welcome to the K-Scale Speech Tokenizer Library!
 
 
-## Download model weights: 
-```bash
-kscale model download kst_1024
-```
-
-
-## Encode and decode audio:
+## To encode and decode audio:
 ```python
-from kst import KST
+from kst.model import KSTConfig, KSTTokenizer
 
-kst = KST(model="kst_1024")
-codes = kst.encode(audio_input)
-wav = kst.decode(codes)
+config = KSTConfig(
+    n_filters=64,
+    strides=[8, 5, 4, 2],
+    dimension=1024,
+    semantic_dimension=768,
+    bidirectional=True,
+    dilation_base=2,
+    residual_kernel_size=3,
+    n_residual_layers=1,
+    lstm_layers=2,
+    activation="ELU",
+    codebook_size=1024,
+    n_q=1,
+    sample_rate=16000,
+)
+
+ckpt_path = "path/to/kst_1024.pt"
+tokenizer = KSTTokenizer.load_from_checkpoint(config, ckpt_path)
+
+audio_input = "path/to/audio/file.wav"
+codes = tokenizer.encode(audio_input)
+wav = tokenizer.decode(codes)
 ```
 
 

@@ -1,12 +1,12 @@
 # Makefile
 
 define HELP_MESSAGE
-kscale-onshape-library
+kst
 
 # Installing
 
-1. Create a new Conda environment: `conda create --name kscale-onshape-library python=3.11`
-2. Activate the environment: `conda activate kscale-onshape-library`
+1. Create a new Conda environment: `conda create --name kscale-kst python=3.11`
+2. Activate the environment: `conda activate kscale-kst`
 3. Install the package: `make install-dev`
 
 # Running Tests
@@ -48,17 +48,17 @@ clean:
 
 
 format:
-	@isort --profile black kol
-	@black kol
-	@ruff format kol
-	@isort kol
+	@isort --profile black kst
+	@black kst
+	@ruff format kst
+	@isort kst
 .PHONY: format
 
 static-checks:
-	@isort --profile black --check --diff kol
-	@black --diff --check kol
-	@ruff check kol
-	@mypy --install-types --non-interactive kol
+	@isort --profile black --check --diff kst
+	@black --diff --check kst
+	@ruff check kst
+	@mypy --install-types --non-interactive kst
 .PHONY: lint
 
 mypy-daemon:

@@ -30,17 +30,6 @@ warn_redundant_casts = true
 incremental = true
 namespace_packages = false
 
-[[tool.mypy.overrides]]
-
-module = [
-    "mujoco.*",
-    "networkx.*",
-    "open3d.*",
-    "pybullet.*",
-    "scipy.*",
-    "stl.*",
-]
-
 ignore_missing_imports = true
 
 [tool.isort]
