@@ -11,7 +11,7 @@
 # K-Scale Speech Tokenizer
 
 Welcome to the K-Scale Speech Tokenizer Library!
-
+You can download the model [here](https://kscale-public.s3.us-east-1.amazonaws.com/kst/kst_1_1024/kst_1_1024.pt).
 
 ## To encode and decode audio:
 ```python
